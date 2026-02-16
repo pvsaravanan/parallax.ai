@@ -54,7 +54,9 @@ export default function RootLayout({
       >
         <div className="noise-overlay" aria-hidden="true" />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <SmoothScroll>{children}</SmoothScroll>
+          <SmoothScroll>
+            {children}
+          </SmoothScroll>
         </ThemeProvider>
         <Analytics />
       </body>

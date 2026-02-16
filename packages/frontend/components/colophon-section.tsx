@@ -1,8 +1,9 @@
 "use client"
 
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { AnimatedNoise } from "@/components/animated-noise"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -11,6 +12,8 @@ export function ColophonSection() {
   const headerRef = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
   const footerRef = useRef<HTMLDivElement>(null)
+  const glowRef = useRef<HTMLDivElement>(null)
+  const [noiseActive, setNoiseActive] = useState(false)
 
   useEffect(() => {
     if (!sectionRef.current) return
@@ -62,6 +65,28 @@ export function ColophonSection() {
           },
         })
       }
+
+      if (glowRef.current) {
+        gsap.fromTo(
+          glowRef.current,
+          { opacity: 0, y: 24 },
+          {
+            opacity: 0.8,
+            y: 0,
+            duration: 1,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 85%",
+              end: "bottom 60%",
+              onEnter: () => setNoiseActive(true),
+              onEnterBack: () => setNoiseActive(true),
+              onLeave: () => setNoiseActive(false),
+              onLeaveBack: () => setNoiseActive(false),
+            },
+          }
+        )
+      }
     }, sectionRef)
 
     return () => ctx.revert()
@@ -73,94 +98,105 @@ export function ColophonSection() {
       id="colophon"
       className="relative py-32 pl-6 md:pl-28 pr-6 md:pr-12 border-t border-border/30"
     >
-      {/* Section header */}
-      <div ref={headerRef} className="mb-16">
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">04 / Links</span>
-        <h2 className="mt-4 font-[var(--font-bebas)] text-5xl md:text-7xl tracking-tight">PROJECT</h2>
-      </div>
-
-      {/* Multi-column layout */}
-      <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 md:gap-12">
-        {/* Design */}
-        <div className="col-span-1">
-          <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Product</h4>
-          <ul className="space-y-2">
-            <li className="font-mono text-xs text-foreground/80">Battle</li>
-            <li className="font-mono text-xs text-foreground/80">Side-by-side</li>
-          </ul>
-        </div>
-
-        {/* Stack */}
-        <div className="col-span-1">
-          <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Stack</h4>
-          <ul className="space-y-2">
-            <li className="font-mono text-xs text-foreground/80">Next.js</li>
-            <li className="font-mono text-xs text-foreground/80">Tailwind CSS</li>
-            <li className="font-mono text-xs text-foreground/80">Vercel</li>
-          </ul>
-        </div>
-
-        {/* Typography */}
-        <div className="col-span-1">
-          <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Typography</h4>
-          <ul className="space-y-2">
-            <li className="font-mono text-xs text-foreground/80">Bebas Neue</li>
-            <li className="font-mono text-xs text-foreground/80">IBM Plex Sans</li>
-            <li className="font-mono text-xs text-foreground/80">IBM Plex Mono</li>
-          </ul>
-        </div>
-
-        {/* Location */}
-        <div className="col-span-1">
-          <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Focus</h4>
-          <ul className="space-y-2">
-            <li className="font-mono text-xs text-foreground/80">Fairness</li>
-            <li className="font-mono text-xs text-foreground/80">Reproducibility</li>
-          </ul>
-        </div>
-
-        {/* Contact */}
-        <div className="col-span-1">
-          <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Contact</h4>
-          <ul className="space-y-2">
-            <li>
-              <a
-                href="mailto:hello@parallax.ai"
-                className="font-mono text-xs text-foreground/80 hover:text-accent transition-colors duration-200"
-              >
-                Email
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="font-mono text-xs text-foreground/80 hover:text-accent transition-colors duration-200"
-              >
-                Docs
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        {/* Year */}
-        <div className="col-span-1">
-          <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Year</h4>
-          <ul className="space-y-2">
-            <li className="font-mono text-xs text-foreground/80">2026</li>
-            <li className="font-mono text-xs text-foreground/80">Ongoing</li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Bottom copyright */}
       <div
-        ref={footerRef}
-        className="mt-24 pt-8 border-t border-border/20 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-      >
-        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
-          © 2026 Parallax.ai. All rights reserved.
-        </p>
-        <p className="font-mono text-[10px] text-muted-foreground">A research instrument for human preference evaluation.</p>
+        ref={glowRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-[linear-gradient(to_top,lab(63.7311%_54.8773_72.7088)_0%,transparent_70%)] blur-3xl opacity-80 z-0"
+      />
+
+      <AnimatedNoise active={noiseActive} opacity={0.05} className="pointer-events-none absolute inset-0 z-[1]" />
+
+      <div className="relative z-10">
+        {/* Section header */}
+        <div ref={headerRef} className="mb-16">
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">04 / Links</span>
+          <h2 className="mt-4 font-[var(--font-bebas)] text-5xl md:text-7xl tracking-tight">PROJECT</h2>
+        </div>
+
+        {/* Multi-column layout */}
+        <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 md:gap-12">
+          {/* Design */}
+          <div className="col-span-1">
+            <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Product</h4>
+            <ul className="space-y-2">
+              <li className="font-mono text-xs text-foreground/80">Battle</li>
+              <li className="font-mono text-xs text-foreground/80">Side-by-side</li>
+            </ul>
+          </div>
+
+          {/* Stack */}
+          <div className="col-span-1">
+            <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Stack</h4>
+            <ul className="space-y-2">
+              <li className="font-mono text-xs text-foreground/80">Next.js</li>
+              <li className="font-mono text-xs text-foreground/80">Tailwind CSS</li>
+              <li className="font-mono text-xs text-foreground/80">Vercel</li>
+            </ul>
+          </div>
+
+          {/* Typography */}
+          <div className="col-span-1">
+            <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Typography</h4>
+            <ul className="space-y-2">
+              <li className="font-mono text-xs text-foreground/80">Bebas Neue</li>
+              <li className="font-mono text-xs text-foreground/80">IBM Plex Sans</li>
+              <li className="font-mono text-xs text-foreground/80">IBM Plex Mono</li>
+            </ul>
+          </div>
+
+          {/* Location */}
+          <div className="col-span-1">
+            <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Focus</h4>
+            <ul className="space-y-2">
+              <li className="font-mono text-xs text-foreground/80">Fairness</li>
+              <li className="font-mono text-xs text-foreground/80">Reproducibility</li>
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div className="col-span-1">
+            <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Contact</h4>
+            <ul className="space-y-2">
+              <li>
+                <a
+                  href="mailto:hello@parallax.ai"
+                  className="font-mono text-xs text-foreground/80 hover:text-accent transition-colors duration-200"
+                >
+                  Email
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="font-mono text-xs text-foreground/80 hover:text-accent transition-colors duration-200"
+                >
+                  Docs
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Year */}
+          <div className="col-span-1">
+            <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Year</h4>
+            <ul className="space-y-2">
+              <li className="font-mono text-xs text-foreground/80">2026</li>
+              <li className="font-mono text-xs text-foreground/80">Ongoing</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom copyright */}
+        <div
+          ref={footerRef}
+          className="mt-24 pt-8 border-t border-border/20 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        >
+          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+            © 2026 Parallax.ai. All rights reserved.
+            <br />
+            A research instrument for human preference evaluation.
+          </p>
+        </div>
       </div>
     </section>
   )

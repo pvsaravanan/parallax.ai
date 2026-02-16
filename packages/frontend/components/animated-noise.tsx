@@ -3,14 +3,17 @@
 import { useEffect, useRef } from "react"
 
 interface AnimatedNoiseProps {
+  active?: boolean
   opacity?: number
   className?: string
 }
 
-export function AnimatedNoise({ opacity = 0.05, className }: AnimatedNoiseProps) {
+export function AnimatedNoise({ active = true, opacity = 0.05, className }: AnimatedNoiseProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    if (!active) return
+
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -57,7 +60,7 @@ export function AnimatedNoise({ opacity = 0.05, className }: AnimatedNoiseProps)
       window.removeEventListener("resize", resize)
       cancelAnimationFrame(animationId)
     }
-  }, [])
+  }, [active])
 
   return (
     <canvas
