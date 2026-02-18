@@ -12,21 +12,25 @@ const signals = [
     date: "MODE.01",
     title: "Battle",
     note: "Two anonymous models. One prompt. Pick the better response. Designed to reduce brand bias.",
+    href: "/battle",
   },
   {
     date: "MODE.02",
     title: "Direct Chat",
     note: "Chat with a single model and record preference signals through structured feedback and outcomes.",
+    href: "/direct",
   },
   {
     date: "MODE.03",
     title: "Side-by-side",
     note: "Select two models explicitly and compare responses in parallel for targeted evaluations.",
+    href: "/side-by-side",
   },
   {
     date: "DATA.01",
     title: "Rankings",
     note: "Aggregate judgments into public leaderboards with transparent sampling and metrics.",
+    href: "/rankings",
   },
 ]
 
@@ -154,11 +158,12 @@ function SignalCard({
   signal,
   index,
 }: {
-  signal: { date: string; title: string; note: string }
+  signal: { date: string; title: string; note: string; href: string }
   index: number
 }) {
   return (
-    <article
+    <a
+      href={signal.href}
       className={cn(
         "group relative w-full",
         "transition-transform duration-500 ease-out",
@@ -166,7 +171,7 @@ function SignalCard({
       )}
     >
       {/* Card with paper texture effect */}
-      <div className="relative bg-card border border-border/50 md:border-t md:border-l md:border-r-0 md:border-b-0 p-8">
+      <article className="relative bg-card border border-border/50 md:border-t md:border-l md:border-r-0 md:border-b-0 p-8">
         {/* Top torn edge effect */}
         <div className="absolute -top-px left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
 
@@ -193,10 +198,10 @@ function SignalCard({
         <div className="absolute bottom-0 right-0 w-6 h-6 overflow-hidden">
           <div className="absolute bottom-0 right-0 w-8 h-8 bg-background rotate-45 translate-x-4 translate-y-4 border-t border-l border-border/30" />
         </div>
-      </div>
+      </article>
 
       {/* Shadow/depth layer */}
       <div className="absolute inset-0 -z-10 translate-x-1 translate-y-1 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-    </article>
+    </a>
   )
 }
