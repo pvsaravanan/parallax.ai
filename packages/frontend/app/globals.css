@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html.smooth-cursor-enabled,
+html.smooth-cursor-enabled * {
+  cursor: none !important;
+}
+
 /* Custom editorial design tokens - monochrome with orange accent */
 :root {
   --background: oklch(0.975 0.01 90);

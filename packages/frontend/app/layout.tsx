@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { IBM_Plex_Sans, IBM_Plex_Mono, Bebas_Neue } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { AppCursor } from "@/components/app-cursor"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SmoothScroll } from "@/components/smooth-scroll"
 import "./globals.css"
@@ -55,6 +56,7 @@ export default function RootLayout({
         <div className="noise-overlay" aria-hidden="true" />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <SmoothScroll>
+            <AppCursor />
             {children}
           </SmoothScroll>
         </ThemeProvider>
