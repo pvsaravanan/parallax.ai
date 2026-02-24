@@ -5,6 +5,7 @@ import { SmoothCursor } from "@/components/ui/smooth-cursor"
 
 export function AppCursor() {
   const [enabled, setEnabled] = useState(false)
+  const [inModesSection, setInModesSection] = useState(false)
 
   useEffect(() => {
     const finePointer = window.matchMedia("(pointer: fine)")
@@ -35,7 +36,35 @@ export function AppCursor() {
     root.classList.remove("smooth-cursor-enabled")
   }, [enabled])
 
+  useEffect(() => {
+    if (!enabled) {
+      setInModesSection(false)
+      return
+    }
+
+    const el = document.getElementById("signals")
+    if (!el) {
+      setInModesSection(false)
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        setInModesSection(!!entry?.isIntersecting)
+      },
+      {
+        threshold: 0.35,
+      },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [enabled])
+
   if (!enabled) return null
+
+  if (inModesSection) return null
 
   return <SmoothCursor />
 }
