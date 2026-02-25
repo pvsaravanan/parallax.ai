@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "copy:marquee-svgs": "node scripts/copy-marquee-svgs.mjs",
+    "predev": "npm run copy:marquee-svgs",
+    "prebuild": "npm run copy:marquee-svgs",
+    "prestart": "npm run copy:marquee-svgs",
     "build": "next build packages/frontend",
     "dev": "next dev packages/frontend",
     "lint": "eslint .",

@@ -186,7 +186,7 @@ export function ColophonSection() {
             </ul>
           </div>
         </div>
-
+``
         <div
           ref={footerRef}
           className="mt-20 pt-8 border-t border-border/20 flex flex-col md:flex-row md:items-center md:justify-between gap-4"

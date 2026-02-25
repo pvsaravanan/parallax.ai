@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { LogoCarousel, type LogoCarouselItem } from "@/components/logo-carousel"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -34,13 +35,14 @@ const signals = [
   },
 ]
 
-export function SignalsSection() {
+export function SignalsSection({ logos }: { logos: LogoCarouselItem[] }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const cardsRef = useRef<HTMLDivElement>(null)
   const cursorRef = useRef<HTMLDivElement>(null)
   const [isHovering, setIsHovering] = useState(false)
+  const [isHoveringCarousel, setIsHoveringCarousel] = useState(false)
 
   useEffect(() => {
     if (!sectionRef.current || !cursorRef.current) return
@@ -128,9 +130,17 @@ export function SignalsSection() {
           "pointer-events-none absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 z-50",
           "w-12 h-12 rounded-full border-2 border-accent bg-accent",
           "transition-opacity duration-300",
-          isHovering ? "opacity-100" : "opacity-0",
+          isHovering && !isHoveringCarousel ? "opacity-100" : "opacity-0",
         )}
       />
+
+      <div
+        className="pr-6 md:pr-12 -mt-14 mb-8 cursor-none"
+        onMouseEnter={() => setIsHoveringCarousel(true)}
+        onMouseLeave={() => setIsHoveringCarousel(false)}
+      >
+        <LogoCarousel logos={logos} />
+      </div>
 
       {/* Section header */}
       <div ref={headerRef} className="mb-16 pr-6 md:pr-12">
