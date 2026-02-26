@@ -7,10 +7,10 @@
     "predev": "npm run copy:marquee-svgs",
     "prebuild": "npm run copy:marquee-svgs",
     "prestart": "npm run copy:marquee-svgs",
-    "build": "next build packages/frontend",
-    "dev": "next dev packages/frontend",
+    "build": "next build apps/frontend",
+    "dev": "next dev apps/frontend",
     "lint": "eslint .",
-    "start": "next start packages/frontend"
+    "start": "next start apps/frontend"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
