@@ -4,26 +4,28 @@ import { WorkSection } from "@/components/work-section"
 import { PrinciplesSection } from "@/components/principles-section"
 import { ColophonSection } from "@/components/colophon-section"
 import { SideNav } from "@/components/side-nav"
-import { promises as fs } from "fs"
-import path from "path"
 
-export default async function Page() {
-  const marqueeDir = path.join(process.cwd(), "public", "marquee")
-  const entries = await fs.readdir(marqueeDir, { withFileTypes: true })
-  const logos = entries
-    .filter((e) => e.isFile() && e.name.toLowerCase().endsWith(".svg"))
-    .map((e) => {
-      const name = e.name.replace(/\.svg$/i, "")
-      const alt = name.replace(/[-_]+/g, " ")
+const logos = [
+  { src: "/marquee/anthropic.svg", alt: "anthropic", monochrome: true },
+  { src: "/marquee/bfl.svg", alt: "bfl", monochrome: true },
+  { src: "/marquee/claude-color.svg", alt: "claude color", monochrome: false },
+  { src: "/marquee/deepseek-color.svg", alt: "deepseek color", monochrome: false },
+  { src: "/marquee/gemini-color.svg", alt: "gemini color", monochrome: false },
+  { src: "/marquee/gemma-color.svg", alt: "gemma color", monochrome: false },
+  { src: "/marquee/groq.svg", alt: "groq", monochrome: true },
+  { src: "/marquee/kimi-color.svg", alt: "kimi color", monochrome: false },
+  { src: "/marquee/longcat-color.svg", alt: "longcat color", monochrome: false },
+  { src: "/marquee/meta-color.svg", alt: "meta color", monochrome: false },
+  { src: "/marquee/mistral-color.svg", alt: "mistral color", monochrome: false },
+  { src: "/marquee/moonshot.svg", alt: "moonshot", monochrome: true },
+  { src: "/marquee/openai.svg", alt: "openai", monochrome: true },
+  { src: "/marquee/openrouter.svg", alt: "openrouter", monochrome: true },
+  { src: "/marquee/qwen-color.svg", alt: "qwen color", monochrome: false },
+  { src: "/marquee/xai.svg", alt: "xai", monochrome: true },
+  { src: "/marquee/zai.svg", alt: "zai", monochrome: true },
+].sort((a, b) => a.alt.localeCompare(b.alt))
 
-      return {
-        src: `/marquee/${e.name}`,
-        alt,
-        monochrome: !name.toLowerCase().includes("color"),
-      }
-    })
-    .sort((a, b) => a.alt.localeCompare(b.alt))
-
+export default function Page() {
   return (
     <main className="relative min-h-screen">
       <SideNav />
