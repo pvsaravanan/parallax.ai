@@ -34,8 +34,10 @@ export function LogoCarousel({
                 alt={logo.alt}
                 draggable={false}
                 loading="eager"
-                className="h-8 md:h-9 w-auto opacity-80 hover:opacity-100 transition-opacity duration-200"
-                style={logo.monochrome ? { filter: "invert(1)" } : undefined}
+                className={cn(
+                  "h-8 md:h-9 w-auto opacity-80 hover:opacity-100 transition-opacity duration-200",
+                  logo.monochrome && "dark:invert",
+                )}
               />
             </div>
           ))}

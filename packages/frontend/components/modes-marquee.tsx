@@ -31,9 +31,8 @@ export function ModesMarquee() {
               alt={logo.alt}
               className={
                 "h-5 md:h-6 w-auto opacity-80 hover:opacity-100 transition-opacity duration-200" +
-                (logo.monochrome ? "" : "")
+                (logo.monochrome ? " dark:invert" : "")
               }
-              style={logo.monochrome ? { filter: "invert(1)" } : undefined}
               draggable={false}
               loading="eager"
             />
