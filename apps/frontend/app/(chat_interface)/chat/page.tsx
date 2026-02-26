@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
 
 type ChatMode = "direct" | "side_by_side" | "battle"
 
@@ -35,6 +36,7 @@ export default function Page() {
   const [mode, setMode] = useState<ChatMode>("direct")
   const [input, setInput] = useState("")
   const [isReplying, setIsReplying] = useState(false)
+  const { user, loading: authLoading, logout } = useAuth()
 
   const models = useMemo<ModelOption[]>(
     () => [
@@ -189,14 +191,13 @@ export default function Page() {
   }, [mode])
 
   return (
-    <main className="relative min-h-screen">
+    <main className="relative h-screen overflow-hidden">
       <div className="grid-bg fixed inset-0 opacity-30" aria-hidden="true" />
 
-      <div className="relative z-10 min-h-screen flex">
-        <aside className="w-[260px] shrink-0 border-r border-border/40 bg-background/60 backdrop-blur-sm">
+      <div className="relative z-10 h-screen flex">
+        <aside className="w-[260px] shrink-0 border-r border-border/40 bg-background/60 backdrop-blur-sm flex flex-col h-screen">
           <div className="h-14 px-5 flex items-center justify-between border-b border-border/30">
             <div className="flex items-center gap-2">
-              <span className="text-lg font-[var(--font-bebas)] tracking-tight">Arena</span>
               <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Parallax</span>
             </div>
             <span className="text-[10px] font-mono text-muted-foreground">v0</span>
@@ -221,7 +222,7 @@ export default function Page() {
           </div>
         </aside>
 
-        <section className="flex-1 min-w-0">
+        <section className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
           <header className="h-14 px-6 flex items-center justify-between border-b border-border/30 bg-background/40 backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Mode</div>
@@ -232,18 +233,47 @@ export default function Page() {
               </div>
             </div>
 
-            <button
-              type="button"
-              className="border border-border/40 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors duration-200"
-            >
-              Login
-            </button>
+            {authLoading ? (
+              <div className="h-8 w-20 bg-border/20 animate-pulse" />
+            ) : user ? (
+              <div className="flex items-center gap-3">
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    className="h-7 w-7 rounded-full border border-border/40 object-cover"
+                  />
+                ) : (
+                  <div className="h-7 w-7 rounded-full border border-accent/40 bg-accent/10 flex items-center justify-center font-mono text-[10px] text-accent uppercase">
+                    {(user.displayName?.[0] ?? user.email?.[0] ?? "U")}
+                  </div>
+                )}
+                <span className="hidden md:inline font-mono text-xs text-foreground/80 max-w-[120px] truncate">
+                  {user.displayName ?? user.email}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void logout()}
+                  className="border border-border/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground hover:text-red-400 hover:border-red-400/40 transition-colors duration-200"
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <a
+                href="/auth"
+                className="border border-border/40 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground hover:text-accent hover:border-accent/60 transition-colors duration-200"
+              >
+                Login
+              </a>
+            )}
           </header>
 
-          <div className="p-6">
-            <div className="max-w-5xl mx-auto">
-              <div className="flex flex-col gap-6">
-                <div className="text-center pt-10 pb-2">
+          <div className="flex-1 overflow-hidden p-4">
+            <div className="max-w-5xl mx-auto h-full flex flex-col">
+              <div className="flex flex-col h-full gap-3">
+                <div className="text-center pt-4 pb-1 shrink-0">
                   <div className="font-[var(--font-bebas)] text-5xl md:text-7xl tracking-tight leading-none">Experience the</div>
                   <div className="mt-2">
                     <span className="inline-block px-3 py-1 bg-accent text-accent-foreground font-[var(--font-bebas)] text-4xl md:text-6xl leading-none">
@@ -253,8 +283,8 @@ export default function Page() {
                   <p className="mt-6 font-mono text-sm text-muted-foreground">{modeMeta.tagline}</p>
                 </div>
 
-                <div className="border border-border/40 bg-background/50 backdrop-blur-sm rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.06)]">
-                  <div className="border-b border-border/30 px-6 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex-1 min-h-0 flex flex-col border border-border/40 bg-background/50 backdrop-blur-sm rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.06)]">
+                  <div className="border-b border-border/30 px-6 py-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between shrink-0 hover:bg-accent/[0.02] transition-colors duration-200">
                     <div className="flex items-center gap-3">
                       <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Session</div>
                       <div className="font-mono text-xs text-foreground/80">Local demo</div>
@@ -316,7 +346,7 @@ export default function Page() {
 
                   <div
                     ref={listRef}
-                    className="h-[48vh] md:h-[56vh] overflow-y-auto px-6 py-6 space-y-4 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.04),transparent_55%)]"
+                    className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.04),transparent_55%)]"
                   >
                     {mode === "direct" ? (
                       directMessages.map((m) => (
@@ -402,7 +432,7 @@ export default function Page() {
                     )}
                   </div>
 
-                  <div className="border-t border-border/30 px-6 py-4 bg-background/40">
+                  <div className="border-t border-border/30 px-6 py-3 bg-background/40 shrink-0 hover:bg-accent/[0.02] transition-colors duration-200">
                     <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Ask anything</div>
                     <div className="mt-3 flex items-end gap-3">
                       <div className="flex-1">
@@ -418,7 +448,7 @@ export default function Page() {
                           }}
                           placeholder="Ask anything…"
                           className={cn(
-                            "w-full min-h-[56px] max-h-[160px] resize-y",
+                            "w-full min-h-[48px] max-h-[100px] resize-y",
                             "rounded-2xl",
                             "bg-background/60 border border-border/40",
                             "px-4 py-3",
@@ -481,8 +511,8 @@ function ModePill({
       className={cn(
         "border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.3em] transition-colors duration-200",
         active
-          ? "border-foreground/20 text-foreground bg-background/40"
-          : "border-border/40 text-muted-foreground hover:text-foreground hover:border-foreground/20",
+          ? "border-accent/40 text-foreground bg-accent/[0.04]"
+          : "border-accent/15 text-muted-foreground hover:text-foreground hover:border-accent/40 hover:bg-accent/[0.02]",
       )}
     >
       {label}
@@ -506,7 +536,7 @@ function SidebarLink({
         "block border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.3em] transition-colors duration-200",
         active
           ? "border-accent/60 text-accent bg-accent/5"
-          : "border-border/0 text-muted-foreground hover:text-foreground hover:border-foreground/10",
+          : "border-accent/0 text-muted-foreground hover:text-foreground hover:border-accent/30 hover:bg-accent/[0.02]",
       )}
     >
       {label}
@@ -543,11 +573,11 @@ function MessageBubble({
         </div>
         <div
           className={cn(
-            "mt-2 rounded-2xl border",
+            "mt-2 rounded-2xl border transition-colors duration-200",
             "px-4 py-3",
             isRight
-              ? "bg-accent/10 border-accent/25"
-              : "bg-background/70 border-border/40",
+              ? "bg-accent/10 border-accent/25 hover:bg-accent/[0.15]"
+              : "bg-background/70 border-border/40 hover:bg-accent/[0.03]",
           )}
         >
           <pre className="whitespace-pre-wrap font-mono text-xs md:text-sm leading-relaxed text-foreground/90">

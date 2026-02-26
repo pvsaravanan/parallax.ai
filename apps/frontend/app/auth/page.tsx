@@ -1,300 +1,429 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { ArrowLeft, KeyRound, Mail, ShieldCheck, UserPlus } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
+import {
+  getFirebaseAuth,
+  getGoogleProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from "@/lib/firebase"
+import { SplitFlapText, SplitFlapAudioProvider } from "@/components/split-flap-text"
 
-type AuthMode = "sign_in" | "sign_up"
+/* ------------------------------------------------------------------ */
+/*  Carousel slide data                                               */
+/* ------------------------------------------------------------------ */
+const SLIDES = [
+  {
+    title: '1B+ REQUESTS <span class="text-orange-500 text-3xl">⚡</span>',
+    desc: "Zero downtime. Deployed globally in under 400ms.",
+    tab: "deployment_log.sh",
+    type: "terminal" as const,
+    lines: [
+      { text: "$ parallax deploy --production", cls: "text-gray-400" },
+      { text: "[info] Analyzing application structure...", cls: "text-blue-400" },
+      { text: "[info] Provisioning edge nodes in 12 regions...", cls: "text-blue-400" },
+      { text: "[warn] Optimizing LLM routing for latency.", cls: "text-orange-500" },
+      { text: "[success] Deployment complete! (0.84s)", cls: "text-green-500" },
+      { text: "$ _", cls: "text-gray-400 mt-4" },
+    ],
+  },
+  {
+    title: 'EDGE INFRASTRUCTURE <span class="text-orange-500 text-3xl"></span>',
+    desc: "Scale your full-stack apps effortlessly across our global network.",
+    tab: "network_topology.viz",
+    type: "image" as const,
+    src: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop",
+    alt: "Global Network",
+  },
+  {
+    title: 'LLM BENCHMARKING <span class="text-orange-500 text-3xl"></span>',
+    desc: "Test and route between open-source models with zero configuration.",
+    tab: "model_metrics.viz",
+    type: "image" as const,
+    src: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?q=80&w=1000&auto=format&fit=crop",
+    alt: "Code Metrics",
+  },
+]
 
-type FormState = {
-  email: string
-  password: string
-  name?: string
-}
+/* ------------------------------------------------------------------ */
+/*  Auth page                                                         */
+/* ------------------------------------------------------------------ */
+export default function AuthPage() {
+  const router = useRouter()
 
-export default function Page() {
-  const [mode, setMode] = useState<AuthMode>("sign_in")
-  const [form, setForm] = useState<FormState>({ email: "", password: "", name: "" })
-  const [submitting, setSubmitting] = useState(false)
+  /* ---- auth form state ---- */
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  const meta = useMemo(() => {
-    if (mode === "sign_up") {
-      return {
-        eyebrow: "AUTH / SIGN UP",
-        title: "CREATE ACCESS",
-        description: "Provision an evaluator identity and start capturing preference data.",
-        icon: <UserPlus className="h-4 w-4" />,
-      }
+  /* ---- carousel state ---- */
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const goToSlide = useCallback((i: number) => setCurrentSlide(i), [])
+
+  const next = useCallback(
+    () => setCurrentSlide((c) => (c + 1) % SLIDES.length),
+    [],
+  )
+  const prev = useCallback(
+    () => setCurrentSlide((c) => (c - 1 + SLIDES.length) % SLIDES.length),
+    [],
+  )
+
+  useEffect(() => {
+    intervalRef.current = setInterval(next, 6000)
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
     }
+  }, [next])
 
-    return {
-      eyebrow: "AUTH / SIGN IN",
-      title: "VERIFY ACCESS",
-      description: "Return to your evaluation sessions and rankings dashboard.",
-      icon: <ShieldCheck className="h-4 w-4" />,
-    }
-  }, [mode])
+  /* ---- toggle auth mode ---- */
+  function toggleAuthMode() {
+    setIsSignUp((v) => !v)
+    setError("")
+    setName("")
+  }
 
-  const onSubmit = async () => {
-    setSubmitting(true)
+  /* ---- Firebase: Google sign-in ---- */
+  async function handleGoogle() {
+    setLoading(true)
+    setError("")
     try {
-      await new Promise((r) => setTimeout(r, 500))
-      alert("Auth is UI-only for now. Wire this to your auth provider/backend.")
+      await signInWithPopup(getFirebaseAuth(), getGoogleProvider())
+      router.push("/chat")
+    } catch (err: any) {
+      setError(err?.message ?? "Google sign-in failed")
     } finally {
-      setSubmitting(false)
+      setLoading(false)
     }
   }
 
+  /* ---- Firebase: email / password ---- */
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+
+    try {
+      if (isSignUp) {
+        const cred = await createUserWithEmailAndPassword(getFirebaseAuth(), email, password)
+        if (name) await updateProfile(cred.user, { displayName: name })
+      } else {
+        await signInWithEmailAndPassword(getFirebaseAuth(), email, password)
+      }
+      router.push("/chat")
+    } catch (err: any) {
+      const msg =
+        err?.code
+          ?.replace("auth/", "")
+          .replace(/-/g, " ")
+          .replace(/^\w/, (c: string) => c.toUpperCase()) ?? "Authentication failed"
+      setError(msg)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /* ---------- render ---------- */
+  const slide = SLIDES[currentSlide]
+
   return (
-    <main className="relative min-h-screen pl-6 md:pl-28 pr-6 md:pr-12 py-20">
-      <div className="grid-bg fixed inset-0 opacity-30" aria-hidden="true" />
+    <>
+      {/* inline critical styles that match the original HTML exactly */}
+      <style jsx global>{`
+        .auth-page-body {
+          background-color: #050505;
+          background-image:
+            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+          background-size: 40px 40px;
+          color: #d1d5db;
+        }
 
-      <div className="relative z-10 mx-auto max-w-5xl">
-        <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">{meta.eyebrow}</span>
-            <h1 className="mt-4 font-[var(--font-bebas)] text-6xl md:text-8xl tracking-tight leading-none">{meta.title}</h1>
-            <p className="mt-6 font-mono text-sm text-muted-foreground leading-relaxed">{meta.description}</p>
-          </div>
+        .cyber-image {
+          filter: grayscale(100%) contrast(120%);
+          mix-blend-mode: luminosity;
+          opacity: 0.5;
+        }
 
-          <div className="flex flex-wrap items-center gap-4">
-            <a
-              href="/"
-              className="inline-flex items-center gap-2 border border-border/40 bg-card/20 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground hover:text-accent hover:border-accent/60 transition-colors duration-200"
-            >
-              <ArrowLeft className="h-3 w-3" />
-              Home
-            </a>
-            <a
-              href="/chat"
-              className="border border-border/40 bg-card/20 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground hover:text-accent hover:border-accent/60 transition-colors duration-200"
-            >
-              Go to Chat
-            </a>
-          </div>
-        </div>
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 30px #0a0a0a inset !important;
+          -webkit-text-fill-color: #d1d5db !important;
+          transition: background-color 5000s ease-in-out 0s;
+        }
+      `}</style>
 
-        <div className="mt-14 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-8">
-          <Card className="border-border/40 bg-card/40 backdrop-blur-sm rounded-none">
-            <CardHeader>
-              <div className="flex items-start justify-between gap-6">
-                <div>
-                  <CardTitle className="font-[var(--font-bebas)] text-4xl tracking-tight">{mode === "sign_in" ? "Sign in" : "Create account"}</CardTitle>
-                  <CardDescription className="font-mono text-xs mt-2">
-                    {mode === "sign_in" ? "Use your credentials." : "Create an identity for evaluation."}
-                  </CardDescription>
-                </div>
-
-                <div className="border border-border/40 bg-background/40 p-3 text-accent">{meta.icon}</div>
+      <div className="auth-page-body font-sans h-screen flex flex-col lg:flex-row overflow-hidden selection:bg-orange-500 selection:text-white">
+        {/* ====================== LEFT PANEL ====================== */}
+        <div className="w-full lg:w-5/12 h-screen flex flex-col justify-center px-8 sm:px-16 lg:px-24 py-6 relative z-10 border-b lg:border-b-0 lg:border-r border-[#1a1a1a] bg-[#050505]/95 backdrop-blur-md overflow-hidden">
+          <div className="w-full max-w-sm mx-auto">
+            {/* ---- Logo ---- */}
+            <div className="mb-6 flex items-center gap-2">
+              <div style={{ transform: 'scale(0.22)', transformOrigin: 'left center', height: '32px', display: 'flex', alignItems: 'center' }}>
+                <SplitFlapAudioProvider>
+                  <SplitFlapText text="PARALLAX" speed={80} />
+                </SplitFlapAudioProvider>
               </div>
-            </CardHeader>
+            </div>
 
-            <CardContent>
-              <Tabs value={mode} onValueChange={(v) => setMode(v as AuthMode)} className="gap-6">
-                <TabsList className="w-full justify-between rounded-none">
-                  <TabsTrigger value="sign_in" className="rounded-none">
-                    Sign in
-                  </TabsTrigger>
-                  <TabsTrigger value="sign_up" className="rounded-none">
-                    Sign up
-                  </TabsTrigger>
-                </TabsList>
+            {/* ---- Header ---- */}
+            <h1 className="mb-2 text-3xl font-bold text-orange-500">
+              {isSignUp ? "Create Account" : "Sign In"}
+            </h1>
+            <p className="text-gray-400 text-sm mb-5">
+              {isSignUp
+                ? "Join Parallax.AI to start deploying your applications."
+                : "Welcome back. Enter your credentials to access your deployments."}
+            </p>
 
-                <TabsContent value="sign_in" className="mt-2">
-                  <div className="space-y-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                        Email
-                      </Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
-                        <Input
-                          id="email"
-                          type="email"
-                          value={form.email}
-                          onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                          className="pl-10 rounded-none bg-background/20 border-border/40"
-                          placeholder="you@company.com"
-                          autoComplete="email"
-                        />
-                      </div>
-                    </div>
+            {/* ---- Error banner ---- */}
+            {error && (
+              <div className="mb-4 border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-400 rounded-md">
+                {error}
+              </div>
+            )}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                        Password
-                      </Label>
-                      <div className="relative">
-                        <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
-                        <Input
-                          id="password"
-                          type="password"
-                          value={form.password}
-                          onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
-                          className="pl-10 rounded-none bg-background/20 border-border/40"
-                          placeholder="••••••••"
-                          autoComplete="current-password"
-                        />
-                      </div>
-                    </div>
+            {/* ---- Google button ---- */}
+            <button
+              type="button"
+              onClick={handleGoogle}
+              disabled={loading}
+              className="w-full bg-white text-black font-semibold py-2 px-4 flex items-center justify-center gap-3 mb-4 hover:bg-gray-200 transition-colors rounded-md shadow-sm disabled:opacity-50"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              Continue with Google
+            </button>
 
-                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between pt-2">
-                      <Button
-                        type="button"
-                        onClick={() => void onSubmit()}
-                        disabled={submitting || !form.email || !form.password}
-                        className="rounded-none font-mono text-[10px] uppercase tracking-[0.3em]"
-                      >
-                        {submitting ? "Signing in" : "Sign in"}
-                      </Button>
+            {/* ---- Divider ---- */}
+            <div className="flex items-center w-full my-4">
+              <hr className="border-gray-800 flex-grow" />
+              <span className="px-4 text-gray-500 text-xs font-medium uppercase tracking-wider">
+                or continue with email
+              </span>
+              <hr className="border-gray-800 flex-grow" />
+            </div>
 
-                      <a
-                        href="#"
-                        className={cn(
-                          "font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground hover:text-foreground transition-colors duration-200",
-                        )}
-                      >
-                        Reset password
-                      </a>
-                    </div>
+            {/* ---- Form ---- */}
+            <form className="space-y-3" onSubmit={handleSubmit}>
+              {/* Name (sign-up only) */}
+              <div
+                className={`transition-all duration-300 overflow-hidden ${
+                  isSignUp ? "max-h-24 opacity-100" : "max-h-0 opacity-0"
+                }`}
+              >
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Ada Lovelace"
+                  className="w-full bg-[#0a0a0a] border border-gray-800 text-gray-200 py-2.5 px-4 rounded-md focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder-gray-600 font-mono text-sm"
+                />
+              </div>
 
-                    <div className="pt-4 border-t border-border/20">
-                      <button
-                        type="button"
-                        onClick={() => setMode("sign_up")}
-                        className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground hover:text-accent transition-colors duration-200"
-                      >
-                        No account? Sign up
-                      </button>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="sign_up" className="mt-2">
-                  <div className="space-y-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                        Name
-                      </Label>
-                      <Input
-                        id="name"
-                        value={form.name ?? ""}
-                        onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                        className="rounded-none bg-background/20 border-border/40"
-                        placeholder="Evaluator"
-                        autoComplete="name"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email2" className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                        Email
-                      </Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
-                        <Input
-                          id="email2"
-                          type="email"
-                          value={form.email}
-                          onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                          className="pl-10 rounded-none bg-background/20 border-border/40"
-                          placeholder="you@company.com"
-                          autoComplete="email"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="password2" className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                        Password
-                      </Label>
-                      <div className="relative">
-                        <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
-                        <Input
-                          id="password2"
-                          type="password"
-                          value={form.password}
-                          onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
-                          className="pl-10 rounded-none bg-background/20 border-border/40"
-                          placeholder="••••••••"
-                          autoComplete="new-password"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="pt-2">
-                      <Button
-                        type="button"
-                        onClick={() => void onSubmit()}
-                        disabled={submitting || !form.email || !form.password}
-                        className="rounded-none font-mono text-[10px] uppercase tracking-[0.3em]"
-                      >
-                        {submitting ? "Creating" : "Create account"}
-                      </Button>
-                    </div>
-
-                    <div className="pt-4 border-t border-border/20">
-                      <button
-                        type="button"
-                        onClick={() => setMode("sign_in")}
-                        className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground hover:text-accent transition-colors duration-200"
-                      >
-                        Already have an account? Sign in
-                      </button>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-
-          <aside className="border border-border/40 bg-card/20 backdrop-blur-sm p-8 rounded-none">
-            <div className="flex items-start justify-between gap-6">
+              {/* Email */}
               <div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Notes</div>
-                <div className="mt-4 font-[var(--font-bebas)] text-4xl tracking-tight">Evaluation access</div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@company.com"
+                  className="w-full bg-[#0a0a0a] border border-gray-800 text-gray-200 py-2.5 px-4 rounded-md focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder-gray-600 font-mono text-sm"
+                />
               </div>
-              <div className="border border-border/40 bg-background/40 p-3 text-accent">
-                <ShieldCheck className="h-4 w-4" />
+
+              {/* Password */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-gray-300">
+                    Password
+                  </label>
+                  {!isSignUp && (
+                    <button
+                      type="button"
+                      className="text-xs text-orange-500 hover:text-orange-400 transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-[#0a0a0a] border border-gray-800 text-gray-200 py-2.5 px-4 rounded-md focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder-gray-600 font-mono text-sm"
+                />
               </div>
+
+              {/* Submit */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-orange-600 hover:bg-orange-500 text-white font-medium py-2.5 px-4 transition-all rounded-md flex items-center justify-center gap-2 group shadow-lg shadow-orange-900/20 disabled:opacity-50"
+                >
+                  <span>{loading ? "Please wait…" : isSignUp ? "Sign Up" : "Sign In"}</span>
+                  <svg
+                    className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M14 5l7 7m0 0l-7 7m7-7H3"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </form>
+
+            {/* ---- Toggle link ---- */}
+            <div className="mt-5 text-center text-sm text-gray-400">
+              <span>{isSignUp ? "Already have an account?" : "Don't have an account?"}</span>{" "}
+              <button
+                type="button"
+                onClick={toggleAuthMode}
+                className="text-orange-500 hover:text-orange-400 font-medium transition-colors ml-1"
+              >
+                {isSignUp ? "Sign in" : "Sign up"}
+              </button>
             </div>
-
-            <div className="mt-6 space-y-4">
-              <div className="border border-border/30 p-4 bg-background/20">
-                <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">What to capture</div>
-                <p className="mt-2 font-mono text-xs text-muted-foreground leading-relaxed">
-                  Session id, prompt version, model ids, transcript, and preference outcomes.
-                </p>
-              </div>
-
-              <div className="border border-border/30 p-4 bg-background/20">
-                <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Security posture</div>
-                <p className="mt-2 font-mono text-xs text-muted-foreground leading-relaxed">
-                  Use short-lived tokens and minimal scopes for evaluators.
-                </p>
-              </div>
-
-              <div className="border border-border/30 p-4 bg-background/20">
-                <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Integrations</div>
-                <p className="mt-2 font-mono text-xs text-muted-foreground leading-relaxed">
-                  This page is UI-only. Tell me if you want Clerk, NextAuth, Supabase Auth, or a custom backend.
-                </p>
-              </div>
-            </div>
-          </aside>
+          </div>
         </div>
 
-        <div className="mt-12 border-t border-border/20 pt-8">
-          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            By continuing you agree to evaluation policy and data handling.
-          </p>
+        {/* ====================== RIGHT PANEL (carousel) ====================== */}
+        <div className="hidden lg:flex w-7/12 h-screen flex-col justify-center items-center p-8 relative bg-transparent font-mono overflow-hidden">
+          {/* Status badge */}
+          <div className="absolute top-8 right-8 bg-[#111] border border-gray-800 px-3 py-1 flex items-center gap-2 rounded-sm shadow-lg shadow-black z-20">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-xs text-gray-400">SYSTEM ONLINE</span>
+          </div>
+
+          <div className="w-full max-w-2xl flex flex-col items-center">
+            {/* Slide title + description */}
+            <div className="text-center mb-10 h-24">
+              <div
+                className="text-white text-5xl font-bold mb-3 flex items-center justify-center gap-3 transition-opacity duration-300 font-sans tracking-tight"
+                dangerouslySetInnerHTML={{ __html: slide.title }}
+              />
+              <p className="text-gray-400 text-sm tracking-wide transition-opacity duration-300">
+                {slide.desc}
+              </p>
+            </div>
+
+            {/* Terminal / image card */}
+            <div className="w-full bg-[#0a0a0a] border border-gray-800 rounded-md shadow-[0_0_40px_rgba(255,69,0,0.06)] overflow-hidden relative h-[280px]">
+              {/* Title-bar */}
+              <div className="absolute top-0 left-0 w-full bg-[#111]/90 backdrop-blur-sm border-b border-gray-800 p-3 flex items-center justify-between z-20">
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-gray-700 hover:bg-red-500 transition-colors cursor-pointer" />
+                  <div className="w-3 h-3 rounded-full bg-gray-700 hover:bg-yellow-500 transition-colors cursor-pointer" />
+                  <div className="w-3 h-3 rounded-full bg-gray-700 hover:bg-green-500 transition-colors cursor-pointer" />
+                </div>
+                <div className="text-gray-500 text-xs">{slide.tab}</div>
+                <div className="w-10" />
+              </div>
+
+              {/* Slides */}
+              {SLIDES.map((s, i) => (
+                <div
+                  key={i}
+                  className={`absolute inset-0 pt-12 transition-opacity duration-500 bg-[#0a0a0a] ${
+                    i === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"
+                  }`}
+                >
+                  {s.type === "terminal" ? (
+                    <div className="p-6 flex flex-col text-sm space-y-2">
+                      {s.lines!.map((line, li) => (
+                        <p key={li} className={line.cls}>
+                          {line.text}
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={s.src}
+                        alt={s.alt}
+                        className="w-full h-full object-cover cyber-image"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Carousel controls */}
+            <div className="mt-6 flex gap-6 items-center text-gray-600 select-none">
+              <button
+                onClick={prev}
+                className="hover:text-white transition-colors text-xl font-bold cursor-pointer p-2"
+              >
+                &lt;
+              </button>
+              <div className="flex gap-3">
+                {SLIDES.map((_, i) => (
+                  <span
+                    key={i}
+                    onClick={() => goToSlide(i)}
+                    className={`cursor-pointer transition-all duration-300 rounded-full h-1.5 ${
+                      i === currentSlide
+                        ? "w-6 bg-orange-500"
+                        : "w-2 bg-gray-700 hover:bg-gray-500"
+                    }`}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={next}
+                className="hover:text-white transition-colors text-xl font-bold cursor-pointer p-2"
+              >
+                &gt;
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </main>
+    </>
   )
 }
