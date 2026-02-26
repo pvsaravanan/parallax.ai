@@ -8,7 +8,7 @@ import { promises as fs } from "fs"
 import path from "path"
 
 export default async function Page() {
-  const marqueeDir = path.join(process.cwd(), "apps", "frontend", "public", "marquee")
+  const marqueeDir = path.join(process.cwd(), "public", "marquee")
   const entries = await fs.readdir(marqueeDir, { withFileTypes: true })
   const logos = entries
     .filter((e) => e.isFile() && e.name.toLowerCase().endsWith(".svg"))
