@@ -1,10 +1,8 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { ScrambleTextOnHover } from "@/components/scramble-text"
 import { SplitFlapText, SplitFlapMuteToggle, SplitFlapAudioProvider } from "@/components/split-flap-text"
 import { AnimatedNoise } from "@/components/animated-noise"
-import { BitmapChevron } from "@/components/bitmap-chevron"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
@@ -63,20 +61,21 @@ export function HeroSection() {
           Battle anonymous models, run direct chat studies, or compare side-by-side. Aggregate human judgments into public rankings.
         </p>
 
-        <div className="mt-16 flex items-center gap-8">
+        {/* Get started terminal prompt */}
+        <div className="mt-12 flex items-center gap-6">
           <a
-            href="#signals"
-            className="group inline-flex items-center gap-3 border border-foreground/20 px-6 py-3 font-mono text-xs uppercase tracking-widest text-foreground hover:border-accent hover:text-accent transition-all duration-200"
+            href="/auth"
+            className="group relative flex items-center gap-3 border border-accent/70 bg-card/30 backdrop-blur-sm px-6 py-4 w-full max-w-md hover:border-accent hover:shadow-[0_0_16px_rgba(var(--accent-rgb,249,115,22),0.15)] transition-all duration-300"
           >
-            <ScrambleTextOnHover text="Explore Modes" as="span" duration={0.6} />
-            <BitmapChevron className="transition-transform duration-[400ms] ease-in-out group-hover:rotate-45" />
+            <span className="font-mono text-sm text-accent font-bold select-none">{">_"}</span>
+            <span className="font-mono text-sm text-muted-foreground tracking-wide group-hover:text-foreground transition-colors duration-200">
+              Get started...
+            </span>
+            <span className="ml-auto w-2.5 h-5 bg-accent animate-pulse" />
           </a>
-          <a
-            href="#principles"
-            className="font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200"
-          >
-            Methodology
-          </a>
+          <span className="hidden sm:inline-flex font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground/60 whitespace-nowrap select-none">
+            Press Enter ↵
+          </span>
         </div>
       </div>
 
