@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Parallax Design System */
+  --color-bg: #0A0A0F;
+  --color-surface: #13131A;
+  --color-border: #1E1E2E;
+  --color-text-primary: #F0F0F5;
+  --color-text-muted: #6B6B80;
+  --color-accent: #6EE7FF;
+  --color-accent-dim: #1A3A42;
+}
+
+body {
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
