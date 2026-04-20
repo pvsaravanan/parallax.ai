@@ -1,0 +1,19 @@
+{
+  "name": "parallax-ai",
+  "private": true,
+  "packageManager": "pnpm@10.17.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n web,gateway,battle -c blue,green,magenta \"pnpm --filter @parallax/web dev\" \"pnpm --filter @parallax/gateway dev\" \"pnpm --filter @parallax/battle dev\"",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "type-check": "pnpm -r typecheck",
+    "db:migrate": "pnpm --filter @parallax/gateway db:migrate && pnpm --filter @parallax/battle db:migrate",
+    "db:seed": "pnpm --filter @parallax/battle db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
