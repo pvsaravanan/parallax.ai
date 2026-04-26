@@ -11,11 +11,47 @@
   --color-text-muted: #6B6B80;
   --color-accent: #6EE7FF;
   --color-accent-dim: #1A3A42;
+  --font-anthropic-sans: "Anthropic Sans", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-anthropic-serif: "Anthropic Serif", Georgia, "Arial Hebrew", "Noto Sans Hebrew", "Times New Roman", Times, "Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", serif;
+  --font-anthropic-mono: "Anthropic Mono", ui-monospace, monospace;
+  --font-open-dyslexic: "OpenDyslexic", "Comic Sans MS", ui-serif, serif;
+  --font-bebas: var(--font-anthropic-sans);
+
+  --bg-0: #0A0A0F;
+  --bg-000: #050507;
+  --bg-100: #1C1C1A;
+  --bg-200: #262624;
+  --bg-300: #3A3A38;
+  --text-100: #F0F0F5;
+  --text-200: #E0E0E0;
+  --text-300: #C7C7C2;
+  --text-400: #A1A19D;
+  --text-500: #6B6B66;
+}
+
+html {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #1c1c1a;
 }
 
 body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
   color: var(--color-text-primary);
-  background: var(--color-bg);
+  background: #1c1c1a;
+  font-family: var(--font-anthropic-sans);
+  overscroll-behavior: none;
+  touch-action: manipulation;
 }
 
 @layer utilities {
